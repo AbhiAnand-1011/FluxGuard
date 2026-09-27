@@ -1,0 +1,41 @@
+name: FluxGuard CD
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: api
+          push: true
+          tags: ghcr.io/abhianand-1011/fluxguard-api:${{ github.sha }}
+
+      - name: Build and push Processor image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: processor
+          push: true
+          tags: ghcr.io/abhianand-1011/fluxguard-processor:${{ github.sha }}
