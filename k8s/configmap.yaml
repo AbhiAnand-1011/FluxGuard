@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluxguard-config
+  namespace: fluxguard
+data:
+  FLUXGUARD_KAFKA_BROKER: "fluxguard-kafka-kafka-bootstrap:9092"
+  FLUXGUARD_KAFKA_TOPIC: "fluxguard-events"
+  FLUXGUARD_KAFKA_ANOMALY_TOPIC: "fluxguard-anomalies"

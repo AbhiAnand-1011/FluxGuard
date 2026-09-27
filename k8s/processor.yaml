@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fluxguard-processor
+  namespace: fluxguard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fluxguard-processor
+  template:
+    metadata:
+      labels:
+        app: fluxguard-processor
+    spec:
+      containers:
+        - name: processor
+          image: fluxguard-processor:latest
+          imagePullPolicy: Never
+          envFrom:
+            - configMapRef:
+                name: fluxguard-config
