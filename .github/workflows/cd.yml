@@ -39,3 +39,74 @@ jobs:
           target: processor
           push: true
           tags: ghcr.io/abhianand-1011/fluxguard-processor:${{ github.sha }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: publish
+
+    env:
+      FLUXGUARD_API_IMAGE: ghcr.io/abhianand-1011/fluxguard-api:${{ github.sha }}
+      FLUXGUARD_PROCESSOR_IMAGE: ghcr.io/abhianand-1011/fluxguard-processor:${{ github.sha }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull FluxGuard images
+        run: docker compose pull api processor
+
+      - name: Start FluxGuard
+        run: docker compose up -d
+
+      - name: Wait for API
+        run: |
+          for i in {1..30}; do
+            if curl --fail --silent http://localhost:8080/health > /dev/null; then
+              echo "API is healthy"
+              exit 0
+            fi
+
+            sleep 2
+          done
+
+          echo "API failed to become healthy"
+          docker compose logs
+          exit 1
+
+      - name: Send smoke test events
+        run: |
+          for i in {1..5}; do
+            curl --fail --silent \
+              -X POST \
+              -H "Content-Type: application/json" \
+              -d "{\"id\":\"ci-test-$i\",\"type\":\"smoke-test\",\"source\":\"github-actions\",\"key\":\"ci-test\",\"value\":1000,\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" \
+              http://localhost:8080/events
+
+            echo
+          done
+
+      - name: Verify anomaly detection
+        run: |
+          for i in {1..30}; do
+            if docker compose logs processor 2>&1 | grep -q "anomaly detected"; then
+              echo "Anomaly detected successfully"
+              exit 0
+            fi
+
+            sleep 2
+          done
+
+          echo "Processor did not detect the expected anomaly"
+          docker compose logs processor
+          exit 1
+
+      - name: Stop FluxGuard
+        if: always()
+        run: docker compose down -v
