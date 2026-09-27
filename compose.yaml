@@ -26,6 +26,34 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  init-kafka:
+    image: apache/kafka:4.3.1
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command:
+      - /bin/bash
+      - -c
+      - |
+        /opt/kafka/bin/kafka-topics.sh \
+          --bootstrap-server kafka:9092 \
+          --create \
+          --if-not-exists \
+          --topic fluxguard-events \
+          --partitions 3 \
+          --replication-factor 1
+
+        /opt/kafka/bin/kafka-topics.sh \
+          --bootstrap-server kafka:9092 \
+          --create \
+          --if-not-exists \
+          --topic fluxguard-anomalies \
+          --partitions 3 \
+          --replication-factor 1
+
+        echo "Kafka topics initialized successfully"
+    restart: "no"
+
   api:
     image: ${FLUXGUARD_API_IMAGE:-fluxguard-api:local}
     build:
@@ -40,8 +68,8 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      kafka:
-        condition: service_healthy
+      init-kafka:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   processor:
@@ -55,6 +83,6 @@ services:
       FLUXGUARD_KAFKA_TOPIC: "fluxguard-events"
       FLUXGUARD_KAFKA_ANOMALY_TOPIC: "fluxguard-anomalies"
     depends_on:
-      kafka:
-        condition: service_healthy
+      init-kafka:
+        condition: service_completed_successfully
     restart: unless-stopped
