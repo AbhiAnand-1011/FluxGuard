@@ -17,6 +17,7 @@ services:
     restart: unless-stopped
 
   api:
+    image: ${FLUXGUARD_API_IMAGE:-fluxguard-api:local}
     build:
       context: .
       target: api
@@ -33,6 +34,7 @@ services:
     restart: unless-stopped
 
   processor:
+    image: ${FLUXGUARD_PROCESSOR_IMAGE:-fluxguard-processor:local}
     build:
       context: .
       target: processor
