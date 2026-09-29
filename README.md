@@ -686,44 +686,6 @@ and perform controlled shutdown.
 
 ---
 
-## Limitations
-
-FluxGuard is a focused distributed-systems project rather than a production-hardened streaming platform.
-
-Current limitations include:
-
-- Sliding-window state is held in process memory.
-- Processor restarts therefore lose its active window state.
-- The window is maintained using incoming event timestamps and does not implement watermarking or event-time reconciliation.
-- Inactive keys are not independently expired without subsequent events.
-- A rule that remains satisfied can produce anomaly records on subsequent events while the condition remains true.
-- Kafka deployment examples use a single broker for simplicity.
-- The Docker Compose environment is designed for local development and temporary CI/CD verification rather than persistent production hosting.
-- The Kubernetes manifests use single-replica application/Kafka configurations for a lightweight deployment model.
-
-These constraints keep the project focused while leaving clear paths for future distributed-systems improvements.
-
----
-
-## Future Improvements
-
-Possible extensions include:
-
-- Persistent or distributed window state
-- Kafka-based state recovery
-- Exactly-once or idempotent anomaly handling
-- Watermarks and stronger event-time processing
-- More configurable rule definitions
-- Dynamic rule loading
-- Dead-letter handling for invalid events
-- Prometheus metrics
-- OpenTelemetry tracing
-- Horizontal processor scaling
-- Multi-broker Kafka deployment
-- Automated vulnerability scanning
-- Deployment rollback support
-
----
 
 ## Tech Stack
 
